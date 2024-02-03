@@ -10,4 +10,6 @@ func main() {
 	ghRefName := os.Getenv("GITHUB_REF_NAME")
 	ghRefId := os.Getenv("GITHUB_REF")
 	fmt.Printf("Running against ref: %s with ref ID: %s", ghRefName, ghRefId)
+	filesChanged := os.Getenv("FILES_CHANGED")
+	fmt.Printf("List of added or modified files: %s", filesChanged)
 }
