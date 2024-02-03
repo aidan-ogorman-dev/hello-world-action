@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -9,36 +9,36 @@ import (
 )
 
 type kubeMetadata struct {
-	name        string            `yaml:"name"`
-	namespace   string            `yaml:"namespace,omitempty"`
-	labels      map[string]string `yaml:"labels,omitempty"`
-	annotations map[string]string `yaml:"annotations,omitempty"`
+	Name        string            `yaml:"name"`
+	Namespace   string            `yaml:"namespace,omitempty"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
 
 type kubeYAMLFile struct {
-	apiVersion string       `yaml:"apiVersion"`
-	kind       string       `yaml:"kind"`
-	metadata   kubeMetadata `yaml:"metadata"`
+	ApiVersion string       `yaml:"apiVersion"`
+	Kind       string       `yaml:"kind"`
+	Metadata   kubeMetadata `yaml:"metadata"`
 }
 
 func main() {
 	files := os.Getenv("REPO_FILES")
 	filesInRepo := strings.Split(files, "\n")
-	fmt.Printf("List of all files: %s", filesInRepo)
+	log.Printf("List of all files: %s", filesInRepo)
 	for _, file := range filesInRepo {
-		content, err := os.ReadFile(fmt.Sprintf("/github/workspace/%s", file))
+		content, err := os.ReadFile("/github/workspace/" + file)
 		if err != nil {
-			fmt.Printf("error reading %s: %v", file, err)
+			log.Fatalf("error reading %s: %v", file, err)
 			return
 		}
 		fileYAML := &kubeYAMLFile{}
 		_ = yaml.Unmarshal(content, fileYAML)
-		fmt.Printf("file contents = %#v\n", string(content))
-		fmt.Printf("file yaml contents = %#v\n", fileYAML)
-		if fileYAML.apiVersion != "" {
-			fmt.Printf("kube labels = %v", fileYAML.metadata.labels)
+		log.Printf("file yaml contents = %#v\n", fileYAML)
+		if fileYAML.ApiVersion != "" {
+			log.Printf("k8s manifest labels = %v", fileYAML.Metadata.Labels)
+			// check for missing label, add it, commit back to GH
 		} else {
-			fmt.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
+			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
 		}
 	}
 }
