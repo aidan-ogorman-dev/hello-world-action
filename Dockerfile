@@ -11,6 +11,7 @@ RUN apt-get -qq update && \
 WORKDIR /src
 COPY . .
 
+RUN go get main
 RUN go build \
   -ldflags "-s -w -extldflags '-static'" \
   -o /bin/app \
