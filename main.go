@@ -23,17 +23,18 @@ type kubeYAMLFile struct {
 
 func main() {
 	files := os.Getenv("REPO_FILES")
-	filesInRepo := strings.Split(files, "\n")
-	log.Printf("List of all files: %s", filesInRepo)
+	filesInRepo := strings.Split(files, " ")
+	log.Printf("List of files to check: %v\n", filesInRepo)
 	for _, file := range filesInRepo {
-		content, err := os.ReadFile("/github/workspace/" + file)
+		filePath := "/github/workspace/" + file
+		buf, err := os.ReadFile(filePath)
+		log.Printf("Checking %s", filePath)
 		if err != nil {
 			log.Fatalf("error reading %s: %v", file, err)
 			return
 		}
 		fileYAML := &kubeYAMLFile{}
-		_ = yaml.Unmarshal(content, fileYAML)
-		log.Printf("file yaml contents = %#v\n", fileYAML)
+		_ = yaml.Unmarshal(buf, fileYAML)
 		if fileYAML.ApiVersion != "" {
 			log.Printf("k8s manifest labels = %v", fileYAML.Metadata.Labels)
 			// check for missing label, add it, commit back to GH
