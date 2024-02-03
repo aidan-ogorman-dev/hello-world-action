@@ -26,7 +26,7 @@ func main() {
 	filesInRepo := strings.Split(files, "\n")
 	fmt.Printf("List of all files: %s", filesInRepo)
 	for _, file := range filesInRepo {
-		content, err := os.ReadFile(file)
+		content, err := os.ReadFile(fmt.Sprintf("/github/workspace/%s", file))
 		if err != nil {
 			fmt.Printf("error reading %s: %v", file, err)
 			return
