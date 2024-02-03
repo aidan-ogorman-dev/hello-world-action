@@ -3,13 +3,40 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
+type kubeMetadata struct {
+	name        string            `yaml:"name"`
+	namespace   string            `yaml:"namespace,omitempty"`
+	labels      map[string]string `yaml:"labels,omitempty"`
+	annotations map[string]string `yaml:"annotations,omitempty"`
+}
+
+type kubeYAMLFile struct {
+	apiVersion string       `yaml:"apiVersion"`
+	kind       string       `yaml:"kind"`
+	metadata   kubeMetadata `yaml:"metadata"`
+}
+
 func main() {
-	fmt.Println("Hello from your go program")
-	ghRefName := os.Getenv("GITHUB_REF_NAME")
-	ghRefId := os.Getenv("GITHUB_REF")
-	fmt.Printf("Running against ref: %s with ref ID: %s", ghRefName, ghRefId)
-	filesChanged := os.Getenv("FILES_CHANGED")
-	fmt.Printf("List of added or modified files: %s", filesChanged)
+	files := os.Getenv("REPO_FILES")
+	filesInRepo := strings.Split(files, "\n")
+	fmt.Printf("List of all files: %s", filesInRepo)
+	for _, file := range filesInRepo {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Printf("error reading %s: %v", file, err)
+			return
+		}
+		fileYAML := &kubeYAMLFile{}
+		_ = yaml.Unmarshal(content, fileYAML)
+		if fileYAML.apiVersion != "" {
+			fmt.Printf("kube labels = %v", fileYAML.metadata.labels)
+		} else {
+			fmt.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
+		}
+	}
 }
