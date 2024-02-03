@@ -33,7 +33,7 @@ func main() {
 		}
 		fileYAML := &kubeYAMLFile{}
 		_ = yaml.Unmarshal(content, fileYAML)
-		fmt.Printf("file contents = %#v\n", content)
+		fmt.Printf("file contents = %#v\n", string(content))
 		fmt.Printf("file yaml contents = %#v\n", fileYAML)
 		if fileYAML.apiVersion != "" {
 			fmt.Printf("kube labels = %v", fileYAML.metadata.labels)
