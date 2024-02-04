@@ -8,6 +8,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	ownerLabel = "owner"
+)
+
 type kubeMetadata struct {
 	Name        string            `yaml:"name"`
 	Namespace   string            `yaml:"namespace,omitempty"`
@@ -37,7 +41,15 @@ func main() {
 		_ = yaml.Unmarshal(buf, fileYAML)
 		if fileYAML.ApiVersion != "" {
 			log.Printf("k8s manifest labels = %v", fileYAML.Metadata.Labels)
-			// check for missing label, add it, commit back to GH
+			if _, ok := fileYAML.Metadata.Labels[ownerLabel]; !ok {
+				log.Printf("adding 'owner' label")
+				fileYAML.Metadata.Labels[ownerLabel] = "platform"
+				buf, err = yaml.Marshal(fileYAML)
+				if err != nil {
+					log.Fatalf("Failed to marshal YAML: %v", err)
+				}
+				os.WriteFile(filePath, buf, 0777)
+			}
 		} else {
 			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
 		}
