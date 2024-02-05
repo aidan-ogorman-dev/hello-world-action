@@ -18,24 +18,31 @@ const (
 func main() {
 	noFilesAddedModified := false
 	noFilesRenamed := false
+	filesAddedModifiedSplit := []string{}
+	filesRenamedSplit := []string{}
+
 	filesAddedModified := os.Getenv("ADDED_MODIFIED_FILES")
+	log.Printf("ADDED_MODIFIED_FILES = '%v'", filesAddedModified)
 	if filesAddedModified == "" {
 		noFilesAddedModified = true
+	} else {
+		filesAddedModifiedSplit = strings.Split(filesAddedModified, " ")
 	}
 	filesRenamed := os.Getenv("RENAMED_FILES")
+	log.Printf("RENAMED_FILES = '%v'", filesRenamed)
 	if filesRenamed == "" {
 		noFilesRenamed = true
+	} else {
+		filesRenamedSplit = strings.Split(filesRenamed, " ")
 	}
 	if noFilesAddedModified && noFilesRenamed {
 		log.Printf("Check complete, good process.")
 		return
 	}
 	files := []string{}
-	filesAddedModifiedSplit := strings.Split(filesAddedModified, " ")
 	for _, f := range filesAddedModifiedSplit {
 		files = append(files, f)
 	}
-	filesRenamedSplit := strings.Split(filesRenamed, " ")
 	for _, f := range filesRenamedSplit {
 		files = append(files, f)
 	}
