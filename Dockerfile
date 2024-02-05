@@ -19,5 +19,4 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /bin/app /app
 
-USER nobody
 ENTRYPOINT ["/app"]
