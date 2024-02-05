@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
+	"k8s.io/cli-runtime/pkg/printers"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 const (
@@ -16,7 +17,6 @@ const (
 func main() {
 	files := os.Getenv("REPO_FILES")
 	filesInRepo := strings.Split(files, " ")
-	log.Printf("List of files to check: %v\n", filesInRepo)
 	for _, file := range filesInRepo {
 		filePath := "/github/workspace/" + file
 		buf, err := os.ReadFile(filePath)
@@ -25,18 +25,20 @@ func main() {
 			log.Fatalf("error reading %s: %v", file, err)
 			return
 		}
-		fileYAML := &v1.Deployment{}
-		_ = yaml.Unmarshal(buf, fileYAML)
+		decode := scheme.Codecs.UniversalDeserializer().Decode
+		obj, _, err := decode(buf, nil, nil)
+		fileYAML := obj.(*v1.Deployment)
+		if err != nil {
+			log.Fatalf("Error while decoding YAML object. Err was: %s", err)
+		}
 		if fileYAML.TypeMeta.APIVersion != "" {
 			log.Printf("k8s manifest labels = %v", fileYAML.ObjectMeta.Labels)
 			if _, ok := fileYAML.ObjectMeta.Labels[ownerLabel]; !ok {
 				log.Printf("adding 'owner' label")
 				fileYAML.ObjectMeta.Labels[ownerLabel] = "platform"
-				buf, err = yaml.Marshal(fileYAML)
-				if err != nil {
-					log.Fatalf("Failed to marshal YAML: %v", err)
-				}
-				err := os.WriteFile(filePath, buf, 0644)
+				path, err := os.Create(filePath)
+				y := printers.YAMLPrinter{}
+				err = y.PrintObj(fileYAML, path)
 				if err != nil {
 					log.Fatalf("Failed to write file: %v", err)
 				}
