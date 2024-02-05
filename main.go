@@ -16,8 +16,20 @@ const (
 )
 
 func main() {
+	noFilesAddedModified := false
+	noFilesRenamed := false
 	filesAddedModified := os.Getenv("ADDED_MODIFIED_FILES")
+	if filesAddedModified == "" {
+		noFilesAddedModified = true
+	}
 	filesRenamed := os.Getenv("RENAMED_FILES")
+	if filesRenamed == "" {
+		noFilesRenamed = true
+	}
+	if noFilesAddedModified && noFilesRenamed {
+		log.Printf("Check complete, good process.")
+		return
+	}
 	files := []string{}
 	filesAddedModifiedSplit := strings.Split(filesAddedModified, " ")
 	for _, f := range filesAddedModifiedSplit {
@@ -26,10 +38,6 @@ func main() {
 	filesRenamedSplit := strings.Split(filesRenamed, " ")
 	for _, f := range filesRenamedSplit {
 		files = append(files, f)
-	}
-	if len(files) == 0 {
-		log.Printf("Check complete, good process.")
-		return
 	}
 	for _, file := range files {
 		filePath := ghVolumePath + file
