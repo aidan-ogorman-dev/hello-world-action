@@ -48,7 +48,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to marshal YAML: %v", err)
 				}
-				err := os.WriteFile(filePath, buf, 0777)
+				err := os.WriteFile(filePath, buf, 0644)
 				if err != nil {
 					log.Fatalf("Failed to write file: %v", err)
 				}
