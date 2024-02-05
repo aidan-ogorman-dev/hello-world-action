@@ -1,18 +1,14 @@
-# Hello world docker action
+# Label checker docker action
 
-This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
+This action checks added and modified files for k8s manifests, and updates them with required labels.
 
 ## Inputs
 
-## `who-to-greet`
-
-**Required** The name of the person to greet. Default `"World"`.
+None
 
 ## Outputs
 
-## `time`
-
-The time we greeted you.
+Modified files are written to ${{ github.workspace }}.
 
 ## Example usage
 

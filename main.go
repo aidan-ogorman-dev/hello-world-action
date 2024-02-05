@@ -6,24 +6,12 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/apps/v1"
 )
 
 const (
 	ownerLabel = "owner"
 )
-
-type kubeMetadata struct {
-	Name        string            `yaml:"name"`
-	Namespace   string            `yaml:"namespace,omitempty"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty"`
-}
-
-type kubeYAMLFile struct {
-	ApiVersion string       `yaml:"apiVersion"`
-	Kind       string       `yaml:"kind"`
-	Metadata   kubeMetadata `yaml:"metadata"`
-}
 
 func main() {
 	files := os.Getenv("REPO_FILES")
@@ -37,13 +25,13 @@ func main() {
 			log.Fatalf("error reading %s: %v", file, err)
 			return
 		}
-		fileYAML := &kubeYAMLFile{}
+		fileYAML := &v1.Deployment{}
 		_ = yaml.Unmarshal(buf, fileYAML)
-		if fileYAML.ApiVersion != "" {
-			log.Printf("k8s manifest labels = %v", fileYAML.Metadata.Labels)
-			if _, ok := fileYAML.Metadata.Labels[ownerLabel]; !ok {
+		if fileYAML.TypeMeta.APIVersion != "" {
+			log.Printf("k8s manifest labels = %v", fileYAML.ObjectMeta.Labels)
+			if _, ok := fileYAML.ObjectMeta.Labels[ownerLabel]; !ok {
 				log.Printf("adding 'owner' label")
-				fileYAML.Metadata.Labels[ownerLabel] = "platform"
+				fileYAML.ObjectMeta.Labels[ownerLabel] = "platform"
 				buf, err = yaml.Marshal(fileYAML)
 				if err != nil {
 					log.Fatalf("Failed to marshal YAML: %v", err)

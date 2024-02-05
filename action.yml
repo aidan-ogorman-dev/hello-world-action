@@ -1,5 +1,5 @@
 # action.yml
-name: 'Label checker'
+name: 'Label Checker'
 description: 'Run a go program which checks if required labels exist'
 runs:
   using: 'docker'
