@@ -12,7 +12,7 @@ import (
 
 const (
 	ownerLabel   = "owner"
-	ghVolumePath = "/github/workspace"
+	ghVolumePath = "/github/workspace/"
 )
 
 func main() {
