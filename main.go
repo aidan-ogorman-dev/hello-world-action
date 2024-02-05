@@ -11,16 +11,30 @@ import (
 )
 
 const (
-	ownerLabel = "owner"
+	ownerLabel   = "owner"
+	ghVolumePath = "/github/workspace"
 )
 
 func main() {
-	files := os.Getenv("REPO_FILES")
-	filesInRepo := strings.Split(files, " ")
-	for _, file := range filesInRepo {
-		filePath := "/github/workspace/" + file
-		buf, err := os.ReadFile(filePath)
+	filesAddedModified := os.Getenv("ADDED_MODIFIED_FILES")
+	filesRenamed := os.Getenv("RENAMED_FILES")
+	files := []string{}
+	filesAddedModifiedSplit := strings.Split(filesAddedModified, " ")
+	for _, f := range filesAddedModifiedSplit {
+		files = append(files, f)
+	}
+	filesRenamedSplit := strings.Split(filesRenamed, " ")
+	for _, f := range filesRenamedSplit {
+		files = append(files, f)
+	}
+	if len(files) == 0 {
+		log.Printf("Check complete, good process.")
+		return
+	}
+	for _, file := range files {
+		filePath := ghVolumePath + file
 		log.Printf("Checking %s", filePath)
+		buf, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Fatalf("error reading %s: %v", file, err)
 			return
