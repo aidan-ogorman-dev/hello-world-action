@@ -26,25 +26,24 @@ func main() {
 			return
 		}
 		decode := scheme.Codecs.UniversalDeserializer().Decode
-		obj, _, err := decode(buf, nil, nil)
+		obj, gvk, err := decode(buf, nil, nil)
+		if gvk.Version == "" {
+			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
+		}
 		fileYAML := obj.(*v1.Deployment)
 		if err != nil {
 			log.Fatalf("Error while decoding YAML object. Err was: %s", err)
 		}
-		if fileYAML.TypeMeta.APIVersion != "" {
-			log.Printf("k8s manifest labels = %v", fileYAML.ObjectMeta.Labels)
-			if _, ok := fileYAML.ObjectMeta.Labels[ownerLabel]; !ok {
-				log.Printf("adding 'owner' label")
-				fileYAML.ObjectMeta.Labels[ownerLabel] = "platform"
-				path, err := os.Create(filePath)
-				y := printers.YAMLPrinter{}
-				err = y.PrintObj(fileYAML, path)
-				if err != nil {
-					log.Fatalf("Failed to write file: %v", err)
-				}
+		log.Printf("k8s manifest labels = %v", fileYAML.ObjectMeta.Labels)
+		if _, ok := fileYAML.ObjectMeta.Labels[ownerLabel]; !ok {
+			log.Printf("adding 'owner' label")
+			fileYAML.ObjectMeta.Labels[ownerLabel] = "platform"
+			path, err := os.Create(filePath)
+			y := printers.YAMLPrinter{}
+			err = y.PrintObj(fileYAML, path)
+			if err != nil {
+				log.Fatalf("Failed to write file: %v", err)
 			}
-		} else {
-			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
 		}
 	}
 }
