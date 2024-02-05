@@ -27,8 +27,9 @@ func main() {
 		}
 		decode := scheme.Codecs.UniversalDeserializer().Decode
 		obj, gvk, err := decode(buf, nil, nil)
-		if gvk.Version == "" {
+		if gvk == nil {
 			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
+			return
 		}
 		fileYAML := obj.(*v1.Deployment)
 		if err != nil {
