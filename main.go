@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -56,24 +57,55 @@ func main() {
 		}
 		decode := scheme.Codecs.UniversalDeserializer().Decode
 		obj, gvk, err := decode(buf, nil, nil)
-		if gvk == nil {
-			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
-			return
-		}
-		fileYAML := obj.(*v1.Deployment)
 		if err != nil {
 			log.Fatalf("Error while decoding YAML object. Err was: %s", err)
 		}
-		log.Printf("k8s manifest labels = %v", fileYAML.ObjectMeta.Labels)
-		if _, ok := fileYAML.ObjectMeta.Labels[ownerLabel]; !ok {
-			log.Printf("adding 'owner' label")
-			fileYAML.ObjectMeta.Labels[ownerLabel] = "platform"
-			path, err := os.Create(filePath)
-			y := printers.YAMLPrinter{}
-			err = y.PrintObj(fileYAML, path)
-			if err != nil {
-				log.Fatalf("Failed to write file: %v", err)
+		switch gvk.Kind {
+		case "":
+			log.Printf("Unmarshalled file: %s, but it's not a kubernetes manifest file", file)
+		case "Deployment":
+			log.Printf("Checking deploy manifest")
+			deploy := obj.(*v1.Deployment)
+			deploy = checkUpdateDeploymentLabels(deploy)
+			if err := writeManifest(deploy, filePath); err != nil {
+				log.Printf("error writing file: %v", err)
 			}
+		case "StatefulSet":
+			log.Printf("Checking statefulset manifest")
+			sts := obj.(*v1.StatefulSet)
+			sts = checkUpdateStatefulSetLabels(sts)
+			if err := writeManifest(sts, filePath); err != nil {
+				log.Printf("error writing file: %v", err)
+			}
+		default:
+			log.Printf("Unrecognised object type %s", gvk.Kind)
 		}
 	}
+}
+
+func checkUpdateDeploymentLabels(deploy *v1.Deployment) *v1.Deployment {
+	if _, ok := deploy.ObjectMeta.Labels[ownerLabel]; !ok {
+		log.Printf("adding 'owner' label")
+		deploy.ObjectMeta.Labels[ownerLabel] = "platform"
+	}
+	return deploy
+}
+
+func checkUpdateStatefulSetLabels(sts *v1.StatefulSet) *v1.StatefulSet {
+	log.Printf("object = %#v", sts.ObjectMeta.Labels[ownerLabel])
+	if _, ok := sts.ObjectMeta.Labels[ownerLabel]; !ok {
+		log.Printf("adding 'owner' label")
+		sts.ObjectMeta.Labels[ownerLabel] = "platform"
+	}
+	return sts
+}
+
+func writeManifest(manifest runtime.Object, filePath string) error {
+	path, err := os.Create(filePath)
+	y := printers.YAMLPrinter{}
+	err = y.PrintObj(manifest, path)
+	if err != nil {
+		log.Fatalf("Failed to write file: %v", err)
+	}
+	return err
 }
