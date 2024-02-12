@@ -66,14 +66,14 @@ func main() {
 		case "Deployment":
 			log.Printf("Checking deploy manifest")
 			deploy := obj.(*v1.Deployment)
-			deploy = checkUpdateDeploymentLabels(deploy)
+			deploy.ObjectMeta.Labels = checkLabels(deploy.ObjectMeta.Labels)
 			if err := writeManifest(deploy, filePath); err != nil {
 				log.Printf("error writing file: %v", err)
 			}
 		case "StatefulSet":
 			log.Printf("Checking statefulset manifest")
 			sts := obj.(*v1.StatefulSet)
-			sts = checkUpdateStatefulSetLabels(sts)
+			sts.ObjectMeta.Labels = checkLabels(sts.ObjectMeta.Labels)
 			if err := writeManifest(sts, filePath); err != nil {
 				log.Printf("error writing file: %v", err)
 			}
@@ -83,21 +83,12 @@ func main() {
 	}
 }
 
-func checkUpdateDeploymentLabels(deploy *v1.Deployment) *v1.Deployment {
-	if _, ok := deploy.ObjectMeta.Labels[ownerLabel]; !ok {
+func checkLabels(labels map[string]string) map[string]string {
+	if _, ok := labels[ownerLabel]; !ok {
 		log.Printf("adding 'owner' label")
-		deploy.ObjectMeta.Labels[ownerLabel] = "platform"
+		labels[ownerLabel] = "platform"
 	}
-	return deploy
-}
-
-func checkUpdateStatefulSetLabels(sts *v1.StatefulSet) *v1.StatefulSet {
-	log.Printf("object = %#v", sts.ObjectMeta.Labels[ownerLabel])
-	if _, ok := sts.ObjectMeta.Labels[ownerLabel]; !ok {
-		log.Printf("adding 'owner' label")
-		sts.ObjectMeta.Labels[ownerLabel] = "platform"
-	}
-	return sts
+	return labels
 }
 
 func writeManifest(manifest runtime.Object, filePath string) error {
