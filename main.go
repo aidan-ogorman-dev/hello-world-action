@@ -48,6 +48,10 @@ func main() {
 		files = append(files, f)
 	}
 	for _, file := range files {
+		if file[0] == '.' {
+			log.Printf("Not checking dot files")
+			continue
+		}
 		filePath := ghVolumePath + file
 		log.Printf("Checking %s", filePath)
 		buf, err := os.ReadFile(filePath)
